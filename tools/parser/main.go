@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	uefi ".."
+	"github.com/insomniacslk/uefi"
 )
 
 func main() {
