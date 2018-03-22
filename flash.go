@@ -22,6 +22,8 @@ type FlashImage struct {
 	DescriptorMap      FlashDescriptorMap
 	Region             FlashRegionSection
 	Master             FlashMasterSection
+	// Actual regions
+	BiosRegion *BiosRegion
 }
 
 // IsPCH returns whether the flash image has the more recent PCH format, or not.
@@ -79,6 +81,7 @@ func (f FlashImage) Summary() string {
 		"    Descriptor=%v\n"+
 		"    Region=%v\n"+
 		"    Master=%v\n"+
+		"    BiosRegion=%v\n"+
 		"}",
 		len(f.buf),
 		f.DescriptorMapStart,
@@ -87,7 +90,15 @@ func (f FlashImage) Summary() string {
 		Indent(f.DescriptorMap.Summary(), 4),
 		Indent(f.Region.Summary(), 4),
 		Indent(f.Master.Summary(), 4),
+		Indent(f.BiosRegion.Summary(), 4),
 	)
+}
+
+func computeRegionSize(base, limit uint16) uint32 {
+	if limit == 0 {
+		return 0
+	}
+	return (uint32(limit) + 1 - uint32(base)) * 0x1000
 }
 
 // NewFlashImage tries to create a FlashImage structure, and returns a FlashImage
@@ -126,6 +137,15 @@ func NewFlashImage(buf []byte) (*FlashImage, error) {
 		return nil, err
 	}
 	flash.Master = *master
+
+	// BIOS region
+	biosBase := uint32(uint32(flash.Region.BiosBase) * 0x1000)
+	biosSize := uint32(computeRegionSize(flash.Region.BiosBase, flash.Region.BiosLimit))
+	br, err := NewBiosRegion(buf[biosBase : biosBase+biosSize])
+	if err != nil {
+		return nil, err
+	}
+	flash.BiosRegion = br
 
 	return &flash, nil
 }

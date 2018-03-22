@@ -60,12 +60,12 @@ func (f FlashRegionSection) Summary() string {
 }
 
 // NewFlashRegionSection initializes a FlashRegionSection from a slice of bytes
-func NewFlashRegionSection(buf []byte) (*FlashRegionSection, error) {
-	if len(buf) < FlashRegionSectionSize {
+func NewFlashRegionSection(data []byte) (*FlashRegionSection, error) {
+	if len(data) < FlashRegionSectionSize {
 		return nil, ErrImageTooSmall
 	}
 	var region FlashRegionSection
-	reader := bytes.NewReader(buf)
+	reader := bytes.NewReader(data)
 	if err := binary.Read(reader, binary.LittleEndian, &region); err != nil {
 		return nil, err
 	}
