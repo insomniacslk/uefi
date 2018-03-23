@@ -3,9 +3,9 @@ package uefi
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
-	"log"
+
+	uuid "github.com/insomniacslk/uefi/uuid"
 )
 
 // FirmwareVolume constants
@@ -13,6 +13,20 @@ const (
 	FirmwareVolumeFixedHeaderSize = 56
 	FirmwareVolumeMinSize         = FirmwareVolumeFixedHeaderSize + 8 // +8 for the null block that terminates the block list
 )
+
+// FirmwareVolumeGUIDs maps the known FV GUIDs. These values come from
+// uefi-firmware-parser
+var FirmwareVolumeGUIDs = map[string]string{
+	"7a9354d9-0468-444a-81ce-0bf617d890df": "FFS1",
+	"8c8ce578-8a3d-4f1c-9935-896185c32dd3": "FFS2",
+	"5473c07a-3dcb-4dca-bd6f-1e9689e7349a": "FFS3",
+	"fff12b8d-7696-4c8b-a985-2747075b4f50": "NVRAM_EVSA",
+	"cef5b9a3-476d-497f-9fdc-e98143e0422c": "NVRAM_NVAR",
+	"00504624-8a59-4eeb-bd0f-6b36e96128e0": "NVRAM_EVSA2",
+	"04adeead-61ff-4d31-b6ba-64f8bf901f5a": "APPLE_BOOT",
+	"16b45da2-7d70-4aea-a58d-760e9ecb841d": "PFH1",
+	"e360bdba-c3ce-46be-8f37-b231e5cb9f35": "PFH2",
+}
 
 // Block describes number and size of the firmware volume blocks
 type Block struct {
@@ -46,10 +60,22 @@ type FirmwareVolume struct {
 
 // Summary prints a multi-line representation of a FirmwareVolume object
 func (fv FirmwareVolume) Summary() string {
-	hexGUID := make([]byte, hex.EncodedLen(len(fv.FileSystemGUID)))
-	hex.Encode(hexGUID, []byte(fv.FileSystemGUID[:]))
+	var (
+		guidName, guidString string
+		ok                   bool
+	)
+	if guid, err := uuid.FromBytes(fv.FileSystemGUID[:]); err == nil {
+		guidString = guid.String()
+		guidName, ok = FirmwareVolumeGUIDs[guidString]
+		if !ok {
+			guidName = "Unknown"
+		}
+	} else {
+		guidString = "<invalid GUID>"
+		guidName = "Unknown"
+	}
 	return fmt.Sprintf("FirmwareVolume{\n"+
-		"    FileSystemGUID=%s\n"+
+		"    FileSystemGUID=%s (%v)\n"+
 		"    Length=%v\n"+
 		"    Signature=0x%08x\n"+
 		"    AttrMask=0x%02x\n"+
@@ -58,7 +84,7 @@ func (fv FirmwareVolume) Summary() string {
 		"    Revision=%v\n"+
 		"    Blocks=%v\n"+
 		"}",
-		hexGUID,
+		guidString, guidName,
 		fv.Length, fv.Signature, fv.AttrMask,
 		fv.HeaderLen, fv.Checksum, fv.Revision,
 		fv.Blocks,
@@ -104,10 +130,8 @@ func NewFirmwareVolume(data []byte) (*FirmwareVolume, error) {
 		}
 		if block.Count == 0 && block.Size == 0 {
 			// found the terminating block
-			log.Print("Terminating block")
 			break
 		}
-		log.Print("Block")
 		blocks = append(blocks, block)
 	}
 	fv.Blocks = blocks
