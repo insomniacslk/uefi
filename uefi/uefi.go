@@ -2,6 +2,7 @@ package uefi
 
 import (
 	"bytes"
+	"fmt"
 )
 
 // Firmware is an interface to describe generic firmware types. The
@@ -22,6 +23,6 @@ func Parse(buf []byte) (Firmware, error) {
 	case bytes.Equal(buf[:len(FlashSignature)], FlashSignature):
 		return NewFlashImage(buf)
 	default:
-		return nil, ErrUnknownFirmwareType
+		return nil, fmt.Errorf("Unknown firmware type")
 	}
 }

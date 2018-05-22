@@ -108,7 +108,10 @@ func (p FlashParams) Summary() string {
 // NewFlashParams initalizes a FlashParam struct from a slice of bytes
 func NewFlashParams(buf []byte) (*FlashParams, error) {
 	if len(buf) != FlashParamsSize {
-		return nil, ErrInvalidImageSize
+		return nil, fmt.Errorf("Invalid image size: expected %v bytes, got %v",
+			FlashParamsSize,
+			len(buf),
+		)
 	}
 	p := FlashParams(buf)
 	return &p, nil

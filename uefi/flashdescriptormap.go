@@ -42,7 +42,10 @@ type FlashDescriptorMap struct {
 // NewFlashDescriptorMap initializes a FlashDescriptor from a slice of bytes.
 func NewFlashDescriptorMap(buf []byte) (*FlashDescriptorMap, error) {
 	if len(buf) < FlashDescriptorMapSize {
-		return nil, ErrImageTooSmall
+		return nil, fmt.Errorf("Flash Descriptor Map size too small: expected %v bytes, got %v",
+			FlashDescriptorMapSize,
+			len(buf),
+		)
 	}
 	r := bytes.NewReader(buf)
 	var descriptor FlashDescriptorMap
@@ -104,22 +107,37 @@ func (d FlashDescriptorMap) Summary() string {
 func (d FlashDescriptorMap) Validate() []error {
 	errors := make([]error, 0)
 	if d.MasterBase > FlashDescriptorMapMaxBase {
-		errors = append(errors, NewErrInvalidBaseAddr("MasterBase too large"))
+		errors = append(errors, fmt.Errorf("MasterBase too large: expected %v bytes, got %v",
+			FlashDescriptorMapMaxBase,
+			d.MasterBase,
+		))
 	}
 	if d.RegionBase > FlashDescriptorMapMaxBase {
-		errors = append(errors, NewErrInvalidBaseAddr("RegionBase too large"))
+		errors = append(errors, fmt.Errorf("RegionBase too large: expected %v bytes, got %v",
+			FlashDescriptorMapMaxBase,
+			d.RegionBase,
+		))
 	}
 	if d.MasterBase > FlashDescriptorMapMaxBase {
-		errors = append(errors, NewErrInvalidBaseAddr("ComponentBase too large"))
+		errors = append(errors, fmt.Errorf("ComponentBase too large: expected %v bytes, got %v",
+			FlashDescriptorMapMaxBase,
+			d.MasterBase,
+		))
 	}
 	if d.MasterBase == d.RegionBase {
-		errors = append(errors, NewErrInvalidBaseAddr("MasterBase must be different from RegionBase"))
+		errors = append(errors, fmt.Errorf("MasterBase must be different from RegionBase: both are at 0x%x",
+			d.MasterBase,
+		))
 	}
 	if d.MasterBase == d.ComponentBase {
-		errors = append(errors, NewErrInvalidBaseAddr("MasterBase must be different from ComponentBase"))
+		errors = append(errors, fmt.Errorf("MasterBase must be different from ComponentBase: both are at 0x%x",
+			d.MasterBase,
+		))
 	}
 	if d.RegionBase == d.ComponentBase {
-		errors = append(errors, NewErrInvalidBaseAddr("RegionBase must be different from ComponentBase"))
+		errors = append(errors, fmt.Errorf("RegionBase must be different from ComponentBase: both are at 0x%x",
+			d.RegionBase,
+		))
 	}
 	return errors
 }

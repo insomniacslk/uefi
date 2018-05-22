@@ -45,7 +45,10 @@ func (m FlashMasterSection) Summary() string {
 
 func NewFlashMasterSection(buf []byte) (*FlashMasterSection, error) {
 	if len(buf) < FlashMasterSectionSize {
-		return nil, ErrImageTooSmall
+		return nil, fmt.Errorf("Flash Master Section size too small: expected %v bytes, got %v",
+			FlashMasterSectionSize,
+			len(buf),
+		)
 	}
 	var master FlashMasterSection
 	reader := bytes.NewReader(buf)
