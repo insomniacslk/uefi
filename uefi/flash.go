@@ -37,25 +37,25 @@ func (f FlashImage) IsPCH() bool {
 // FindSignature looks for the Intel flash signature, and returns its offset
 // from the start of the image. The PCH images are located at offset 16, while
 // in ICH8/9/10 they start at 0. If no signature is found, it returns -1.
-func (f FlashImage) FindSignature() int {
+func (f FlashImage) FindSignature() (int, error) {
 	if bytes.Equal(f.buf[16:16+len(FlashSignature)], FlashSignature) {
 		// 16 + 4 since the descriptor starts after the signature
-		return 20
+		return 20, nil
 	}
 	if bytes.Equal(f.buf[:len(FlashSignature)], FlashSignature) {
 		// + 4 since the descriptor starts after the signature
-		return 4
+		return 4, nil
 	}
-	return -1
+	return -1, fmt.Errorf("Flash signature not found")
 }
 
 // Validate runs a set of checks on the flash image and returns a list of
 // errors specifying what is wrong.
 func (f FlashImage) Validate() []error {
 	errors := make([]error, 0)
-	start := f.FindSignature()
-	if start < 0 {
-		errors = append(errors, ErrFlashSignatureNotFound)
+	_, err := f.FindSignature()
+	if err != nil {
+		errors = append(errors, err)
 	}
 	errors = append(errors, f.DescriptorMap.Validate()...)
 	// TODO also validate regions, masters, etc
@@ -106,12 +106,15 @@ func computeRegionSize(base, limit uint16) uint32 {
 // mode.
 func NewFlashImage(buf []byte) (*FlashImage, error) {
 	if len(buf) < FlashDescriptorMapSize {
-		return nil, ErrImageTooSmall
+		return nil, fmt.Errorf("Flash Descriptor Map size too small: expected %v bytes, got %v",
+			FlashDescriptorMapSize,
+			len(buf),
+		)
 	}
 	flash := FlashImage{buf: buf}
-	descriptorMapStart := flash.FindSignature()
-	if descriptorMapStart < 0 {
-		return nil, ErrFlashSignatureNotFound
+	descriptorMapStart, err := flash.FindSignature()
+	if err != nil {
+		return nil, err
 	}
 	flash.DescriptorMapStart = uint(descriptorMapStart)
 

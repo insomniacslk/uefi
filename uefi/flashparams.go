@@ -33,34 +33,42 @@ var FlashFrequencyStringMap = map[FlashFrequency]string{
 // FlashParams is a 4-byte object that holds the flash parameters information.
 type FlashParams []byte
 
+// FirstChipDensity returns the size of the first chip.
 func (p FlashParams) FirstChipDensity() uint {
 	return uint(p[0] & 0x0f)
 }
 
+// SecondChipDensity returns the size of the second chip.
 func (p FlashParams) SecondChipDensity() uint {
 	return uint((p[0] >> 4) & 0x0f)
 }
 
+// ReadClockFrequency returns the chip frequency while reading from the flash.
 func (p FlashParams) ReadClockFrequency() FlashFrequency {
 	return FlashFrequency((p[2] >> 1) & 0x07)
 }
 
+// FastReadEnabled returns if FastRead is enabled.
 func (p FlashParams) FastReadEnabled() uint {
 	return uint((p[2] >> 4) & 0x01)
 }
 
+// FastReadFrequency returns the frequency under FastRead.
 func (p FlashParams) FastReadFrequency() FlashFrequency {
 	return FlashFrequency((p[2] >> 5) & 0x07)
 }
 
+// FlashWriteFrequency returns the chip frequency for writing.
 func (p FlashParams) FlashWriteFrequency() FlashFrequency {
 	return FlashFrequency(p[3] & 0x07)
 }
 
+// FlashReadStatusFrequency returns the chip frequency while reading the flash status.
 func (p FlashParams) FlashReadStatusFrequency() FlashFrequency {
 	return FlashFrequency((p[3] >> 3) & 0x07)
 }
 
+// DualOutputFastReadSupported returns if Dual Output Fast Read is supported.
 func (p FlashParams) DualOutputFastReadSupported() uint {
 	return uint(p[3] >> 7)
 }
@@ -69,6 +77,7 @@ func (p FlashParams) String() string {
 	return fmt.Sprintf("FlashParams{...}")
 }
 
+// Summary prints a multi-line description of the FlashParams
 func (p FlashParams) Summary() string {
 	rcf, ok := FlashFrequencyStringMap[p.ReadClockFrequency()]
 	if !ok {
@@ -108,7 +117,10 @@ func (p FlashParams) Summary() string {
 // NewFlashParams initalizes a FlashParam struct from a slice of bytes
 func NewFlashParams(buf []byte) (*FlashParams, error) {
 	if len(buf) != FlashParamsSize {
-		return nil, ErrInvalidImageSize
+		return nil, fmt.Errorf("Invalid image size: expected %v bytes, got %v",
+			FlashParamsSize,
+			len(buf),
+		)
 	}
 	p := FlashParams(buf)
 	return &p, nil

@@ -10,6 +10,7 @@ import (
 // FlashRegionSectionSize is the size of the Region descriptor. It is made up by 18 fields, each 16-bits large.
 const FlashRegionSectionSize = 36
 
+// FlashRegionSection holds the metadata of all the different flash regions like PDR, Gbe and the Bios region.
 type FlashRegionSection struct {
 	Reserved            uint16
 	FlashBlockEraseSize uint16
@@ -43,6 +44,7 @@ func (f FlashRegionSection) String() string {
 	)
 }
 
+// Summary prints a multi-line description of the FlashRegionSection
 func (f FlashRegionSection) Summary() string {
 	return fmt.Sprintf("FlashRegionSection{\n"+
 		"    Regions=%v\n"+
@@ -62,7 +64,10 @@ func (f FlashRegionSection) Summary() string {
 // NewFlashRegionSection initializes a FlashRegionSection from a slice of bytes
 func NewFlashRegionSection(data []byte) (*FlashRegionSection, error) {
 	if len(data) < FlashRegionSectionSize {
-		return nil, ErrImageTooSmall
+		return nil, fmt.Errorf("Flash Region Section size too small: expected %v bytes, got %v",
+			FlashRegionSectionSize,
+			len(data),
+		)
 	}
 	var region FlashRegionSection
 	reader := bytes.NewReader(data)

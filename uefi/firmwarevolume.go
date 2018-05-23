@@ -114,7 +114,10 @@ func FindFirmwareVolumeOffset(data []byte) int64 {
 // object, if a valid one is passed, or an error
 func NewFirmwareVolume(data []byte) (*FirmwareVolume, error) {
 	if len(data) < FirmwareVolumeMinSize {
-		return nil, ErrImageTooSmall
+		return nil, fmt.Errorf("Firmware Volume size too small: expected %v bytes, got %v",
+			FirmwareVolumeMinSize,
+			len(data),
+		)
 	}
 	var fv FirmwareVolume
 	reader := bytes.NewReader(data)

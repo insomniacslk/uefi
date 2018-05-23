@@ -5,10 +5,14 @@ import (
 	"strings"
 )
 
+// BiosRegion represents the Bios Region in the firmware.
+// It holds all the FVs as well as padding
+// TODO(ganshun): handle padding
 type BiosRegion struct {
 	FirmwareVolumes []FirmwareVolume
 }
 
+// Summary prints a multi-line description of the Bios Region
 func (br BiosRegion) Summary() string {
 	var fvols []string
 	for _, fv := range br.FirmwareVolumes {
@@ -21,6 +25,8 @@ func (br BiosRegion) Summary() string {
 		"}", Indent(strings.Join(fvols, "\n"), 8))
 }
 
+// NewBiosRegion parses a sequence of bytes and returns a BiosRegion
+// object, if a valid one is passed, or an error
 func NewBiosRegion(data []byte) (*BiosRegion, error) {
 	var br BiosRegion
 	for {
