@@ -6,8 +6,11 @@ import (
 	"fmt"
 )
 
+// FlashMasterSectionSize is the size in bytes of the FlashMaster section
 const FlashMasterSectionSize = 12
 
+// FlashMasterSection holds all the IDs and read/write permissions for other regions
+// This controls whether the bios region can read/write to the ME for example.
 type FlashMasterSection struct {
 	BiosID    uint16
 	BiosRead  uint8
@@ -25,6 +28,7 @@ func (m FlashMasterSection) String() string {
 		m.BiosID, m.MeID, m.GbeID)
 }
 
+// Summary prints a multi-line description of the FlashMasterSection
 func (m FlashMasterSection) Summary() string {
 	return fmt.Sprintf("FlashMasterSection{\n"+
 		"    BiosID=%v\n"+
@@ -43,6 +47,8 @@ func (m FlashMasterSection) Summary() string {
 	)
 }
 
+// NewFlashMasterSection parses a sequence of bytes and returns a FlashMasterSection
+// object, if a valid one is passed, or an error
 func NewFlashMasterSection(buf []byte) (*FlashMasterSection, error) {
 	if len(buf) < FlashMasterSectionSize {
 		return nil, fmt.Errorf("Flash Master Section size too small: expected %v bytes, got %v",
